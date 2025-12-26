@@ -1,41 +1,9 @@
-# Welcome to Bookstore
+# 欢迎来到我的书库
 
-> 我的在线书库 - 随时随地阅读
+[![pages-build-deployment](https://github.com/geekmini/bookstore/actions/workflows/pages/pages-build-deployment/badge.svg?branch=main)](https://github.com/geekmini/bookstore/actions/workflows/pages/pages-build-deployment)
 
-这是一个基于 [Docsify](https://docsify.js.org/) 构建的在线书籍阅读网站。
 
 ## 书籍列表
 
-在侧边栏或下方选择一本书开始阅读：
-
 - [炁體源流（上册）](/books/qi-ti-yuan-liu-shang/) - 米晶子编著，全真龍門派道家经典
 - [炁體源流（下册）](/books/qi-ti-yuan-liu-xia/) - 米晶子编著，全真龍門派道家经典
-
-## 功能特点
-
-- **全文搜索** - 使用顶部搜索框快速查找内容
-- **章节导航** - 侧边栏提供清晰的章节结构
-- **代码高亮** - 支持多种编程语言的语法高亮
-- **响应式设计** - 在手机、平板、电脑上都有良好体验
-- **阅读进度** - 自动记住阅读位置
-
-## 如何使用
-
-1. 从左侧侧边栏选择书籍
-2. 点击章节标题进入阅读
-3. 使用顶部搜索框搜索内容
-4. 使用底部的"上一章/下一章"按钮翻页
-
-## 本地开发
-
-```bash
-# 使用 just 命令
-just serve
-
-# 或直接使用 npx
-npx docsify-cli serve .
-```
-
----
-
-*有问题或建议？欢迎反馈！*
