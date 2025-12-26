@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="我的书库 - 在线阅读">
+  <title>Bookstore</title>
+  <!-- Docsify 主题 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">
+  <!-- 自定义样式 -->
+  <style>
+    :root {
+      /* 主题色 */
+      --theme-color: #3F51B5;
+
+      /* 侧边栏 */
+      --sidebar-width: 280px;
+      --sidebar-background: #f8f9fa;
+
+      /* 中文字体优化 */
+      --base-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      --content-max-width: 900px;
+
+      /* 代码块 */
+      --code-font-family: "Fira Code", "Source Code Pro", Consolas, monospace;
+    }
+
+    /* 中文排版优化 */
+    .markdown-section {
+      line-height: 1.8;
+      letter-spacing: 0.02em;
+    }
+
+    .markdown-section h1,
+    .markdown-section h2,
+    .markdown-section h3 {
+      font-weight: 600;
+    }
+
+    /* 图片居中且响应式 */
+    .markdown-section img {
+      display: block;
+      max-width: 100%;
+      margin: 1em auto;
+      border-radius: 4px;
+    }
+
+    /* 引用块样式 */
+    .markdown-section blockquote {
+      border-left: 4px solid var(--theme-color);
+      background: #f5f5f5;
+      padding: 1em;
+      margin: 1em 0;
+    }
+
+    /* 搜索框优化 */
+    .search input {
+      font-size: 16px !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">正在加载...</div>
+
+  <script>
+    window.$docsify = {
+      name: '📚 Bookstore',
+      repo: '', // 可以填入你的 GitHub 仓库地址
+
+      // 加载侧边栏
+      loadSidebar: true,
+
+      // 加载顶部导航
+      loadNavbar: true,
+
+      // 子目录使用自己的侧边栏
+      alias: {
+        '/books/.*/.*/_sidebar.md': '/books/_sidebar.md',
+        '/_sidebar.md': '/_sidebar.md',
+        '/_navbar.md': '/_navbar.md'
+      },
+
+      // 自动生成标题
+      subMaxLevel: 3,
+
+      // 首页
+      homepage: 'README.md',
+
+      // 搜索配置
+      search: {
+        placeholder: '搜索...',
+        noData: '没有找到结果',
+        paths: 'auto',
+        depth: 3,
+      },
+
+      // 复制代码插件配置
+      copyCode: {
+        buttonText: '复制',
+        successText: '已复制',
+      },
+
+      // 分页配置
+      pagination: {
+        previousText: '上一章',
+        nextText: '下一章',
+        crossChapter: true,
+      },
+
+      // 字数统计
+      count: {
+        countable: true,
+        position: 'top',
+        margin: '10px',
+        float: 'right',
+        fontsize: '0.9em',
+        color: 'rgb(90,90,90)',
+        language: 'chinese',
+      },
+
+      // 404 页面
+      notFoundPage: true,
+
+      // 路由模式 - 使用 hash 模式兼容 GitHub Pages
+      routerMode: 'hash',
+
+      // 相对路径
+      relativePath: true,
+    }
+  </script>
+
+  <!-- Docsify 核心 -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+
+  <!-- 搜索插件 -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+
+  <!-- 图片缩放 -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/zoom-image.min.js"></script>
+
+  <!-- 复制代码 -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify-copy-code@2"></script>
+
+  <!-- 分页导航 -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify-pagination@2/dist/docsify-pagination.min.js"></script>
+
+  <!-- 字数统计 -->
+  <script src="https://cdn.jsdelivr.net/npm/docsify-count@latest/dist/countable.min.js"></script>
+
+  <!-- 代码高亮 - 支持多种语言 -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-javascript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-typescript.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-markdown.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-java.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-go.min.js"></script>
+</body>
+</html>
