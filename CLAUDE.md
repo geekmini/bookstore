@@ -8,12 +8,19 @@ This is a static documentation website built with [Docsify](https://docsify.js.o
 
 ## Development Commands
 
-```bash
-# Start local development server
-npx docsify-cli serve .
+Using [just](https://github.com/casey/just) command runner:
 
-# Or with specific port
-npx docsify-cli serve . --port 3001
+```bash
+just              # Show available commands
+just serve        # Start local dev server
+just serve-port 3001  # Start on specific port
+just list-books   # List all books
+```
+
+Or directly with npx:
+
+```bash
+npx docsify-cli serve .
 ```
 
 ## Architecture
@@ -30,12 +37,13 @@ Each book lives in `books/<book-name>/` with:
 - `_sidebar.md` - Chapter navigation for that book
 - `chapter*.md` - Individual chapters
 
-### Adding a New Book
-1. Create directory: `books/new-book/`
-2. Add `README.md` (book intro) and `_sidebar.md` (chapter list)
-3. Add chapter Markdown files
-4. Update root `_sidebar.md` to include the new book link
-5. Update root `_navbar.md` if needed
+### Syncing Book Info
+Use the skill in `.claude/skills/sync-book-info/` - it automates:
+1. Creating `README.md` and `_sidebar.md` for new books
+2. Updating global `_sidebar.md`, `_navbar.md`, and `README.md`
+3. Removing entries for deleted book folders
+
+The user only needs to create the book folder with markdown content files, then ask to "sync book".
 
 ### Docsify Configuration
 All configuration is in `index.html` within `window.$docsify`:

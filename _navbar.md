@@ -2,5 +2,6 @@
 
 - [首页](/)
 - 书籍
-  - [示例书籍](/books/sample-book/)
+  - [炁體源流（上册）](/books/qi-ti-yuan-liu-shang/)
+  - [炁體源流（下册）](/books/qi-ti-yuan-liu-xia/)
 - [关于](/about.md)

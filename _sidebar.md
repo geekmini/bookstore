@@ -3,7 +3,5 @@
 - [首页](/)
 
 - **书籍列表**
-  - [示例书籍](/books/sample-book/)
-
-<!-- 添加新书籍时，在这里添加链接 -->
-<!-- - [新书名称](/books/new-book/) -->
+  - [炁體源流（上册）](/books/qi-ti-yuan-liu-shang/)
+  - [炁體源流（下册）](/books/qi-ti-yuan-liu-xia/)
