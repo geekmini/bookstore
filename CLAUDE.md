@@ -49,4 +49,4 @@ All configuration is in `index.html` within `window.$docsify`:
 Designed for GitHub Pages:
 1. Push to GitHub repository
 2. Enable Pages in repository settings (use main branch)
-3. Site available at `https://<username>.github.io/<repo-name>/`
+3. Site available at `https://github.com/geekmini/bookstore`
