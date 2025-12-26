@@ -6,11 +6,7 @@ default:
 
 # Start local development server
 serve:
-    npx docsify-cli serve .
-
-# Start server on specific port
-serve-port port="3001":
-    npx docsify-cli serve . --port {{port}}
+    npx docsify-cli serve . --open
 
 # List all books
 list-books:
