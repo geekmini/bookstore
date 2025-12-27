@@ -1097,13 +1097,58 @@
       return div.innerHTML;
     }
 
+    // Fix malformed Markdown from AI responses
+    function fixMarkdown(text) {
+      if (!text) return text;
+
+      let fixed = text;
+
+      // Fix unclosed bold markers: **text without closing **
+      // Count ** occurrences - if odd, the last one is unclosed
+      const boldMatches = fixed.match(/\*\*/g);
+      if (boldMatches && boldMatches.length % 2 !== 0) {
+        // Find the last ** and close it at end of that line or add closing **
+        fixed = fixed.replace(/\*\*([^*\n]+)$/gm, '**$1**');
+      }
+
+      // Fix bold markers split across content: **text** but with issues
+      // Pattern: **word at start of line without closing
+      fixed = fixed.replace(/^\*\*([^*\n]+)$/gm, '**$1**');
+
+      // Fix cases like "**什么是" becoming display issues
+      // Ensure ** pairs are properly closed within reasonable distance
+      fixed = fixed.replace(/\*\*([^*]{1,50}?)(?=\n|$)/g, (match, content) => {
+        if (!content.includes('**')) {
+          return '**' + content + '**';
+        }
+        return match;
+      });
+
+      // Fix list items that start with -word (missing space after -)
+      fixed = fixed.replace(/^-([^\s-])/gm, '- $1');
+
+      // Fix unclosed inline code
+      const codeMatches = fixed.match(/(?<!`)`(?!`)/g);
+      if (codeMatches && codeMatches.length % 2 !== 0) {
+        fixed = fixed.replace(/`([^`\n]+)$/gm, '`$1`');
+      }
+
+      // Remove orphan ** at line start or end
+      fixed = fixed.replace(/^\*\*\s*$/gm, '');
+      fixed = fixed.replace(/^\*\*(?!\S)/gm, '');
+
+      return fixed;
+    }
+
     function renderMarkdown(text) {
       if (typeof marked !== 'undefined') {
         marked.setOptions({
           breaks: true,
           gfm: true
         });
-        return marked.parse(text);
+        // Apply fixes before parsing
+        const fixedText = fixMarkdown(text);
+        return marked.parse(fixedText);
       }
       return escapeHtml(text).replace(/\n/g, '<br>');
     }
