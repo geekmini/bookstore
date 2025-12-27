@@ -1,25 +1,7 @@
 # 关于
 
-## 关于 Bookstore
+这是一个个人书库，收集我平时想看的各类书籍。
 
-Bookstore 是一个基于 [Docsify](https://docsify.js.org/) 构建的在线书籍阅读网站。
+书籍内容不局限于某一领域，可能涵盖道家、佛学、哲学、历史，或其他感兴趣的主题。
 
-## 特点
-
-- **简单** - 只需要 Markdown 文件，无需复杂的构建过程
-- **快速** - 纯前端渲染，无需后端服务器
-- **灵活** - 支持自定义主题和插件
-- **免费** - 可以免费部署在 GitHub Pages
-
-## 技术栈
-
-- [Docsify](https://docsify.js.org/) - 文档网站生成器
-- [GitHub Pages](https://pages.github.com/) - 静态网站托管
-
-## 联系
-
-如有问题或建议，欢迎联系。
-
----
-
-*Built with Docsify*
+欢迎阅读。
