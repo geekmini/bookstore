@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="藏书阁 - 在线阅读">
   <title>藏书阁</title>
-  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="./assets/images/favicon.svg">
   <!-- Docsify 主题 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">
   <!-- 自定义样式 -->
@@ -895,7 +895,7 @@
 
     async function loadBookConfig(bookPath) {
       try {
-        const response = await fetch(`/books/${bookPath}/_chatbot.json`);
+        const response = await fetch(`./books/${bookPath}/_chatbot.json`);
         if (!response.ok) return null;
         const config = await response.json();
         return config.enabled ? config : null;
