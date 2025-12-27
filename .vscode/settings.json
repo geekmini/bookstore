@@ -1,0 +1,6 @@
+{
+  // Paste Image 插件 - 输出标准 Markdown 格式 + 相对路径
+  "pasteImage.path": "${currentFileDir}/img",
+  "pasteImage.defaultName": "Y-MM-DD-HH-mm-ss",
+  "pasteImage.insertPattern": "![](${imageFilePath})"
+}

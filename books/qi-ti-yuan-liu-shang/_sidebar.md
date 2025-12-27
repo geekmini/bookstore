@@ -4,7 +4,7 @@
 
 - **炁體源流（上册）**
   - [简介](/books/qi-ti-yuan-liu-shang/)
-  - [第1-10页](/books/qi-ti-yuan-liu-shang/pages_0001-0010.md)
+  - [序章：祖师源流](/books/qi-ti-yuan-liu-shang/01-序章-祖师源流.md)
   - [第11-20页](/books/qi-ti-yuan-liu-shang/pages_0011-0020.md)
   - [第21-30页](/books/qi-ti-yuan-liu-shang/pages_0021-0030.md)
   - [第31-40页](/books/qi-ti-yuan-liu-shang/pages_0031-0040.md)
