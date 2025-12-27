@@ -159,29 +159,1224 @@
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-java.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-go.min.js"></script>
 
-  <!-- Dify 聊天机器人 -->
-  <script>
-    window.difyChatbotConfig = {
-      token: '2EDRu5KRJ7wWNvsm'
-    }
-  </script>
-  <script src="https://udify.app/embed.min.js" id="2EDRu5KRJ7wWNvsm" defer></script>
+  <!-- 藏书阁自定义聊天机器人 -->
+  <!-- Marked.js for Markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Chatbot Styles -->
   <style>
-    /* 聊天按钮 - 使用网站主题色 */
-    #dify-chatbot-bubble-button {
-      background-color: #3F51B5 !important;
-      box-shadow: 0 4px 12px rgba(63, 81, 181, 0.3) !important;
+    /* ═══════════════════════════════════════════════════════════════
+       藏书阁 Chatbot - Scholar's Study Aesthetic
+       ═══════════════════════════════════════════════════════════════ */
+
+    :root {
+      --chat-primary: #3F51B5;
+      --chat-primary-dark: #303F9F;
+      --chat-primary-light: #5C6BC0;
+      --chat-bg: #FAFBFC;
+      --chat-surface: #FFFFFF;
+      --chat-text: #2D3748;
+      --chat-text-secondary: #718096;
+      --chat-border: #E2E8F0;
+      --chat-user-bubble: #3F51B5;
+      --chat-ai-bubble: #F7F8FA;
+      --chat-shadow: 0 8px 32px rgba(45, 55, 72, 0.12);
+      --chat-shadow-lg: 0 16px 48px rgba(45, 55, 72, 0.16);
     }
-    #dify-chatbot-bubble-button:hover {
-      background-color: #303F9F !important;
+
+    /* ─────────────────────────────────────────────────────────────────
+       Floating Chat Button
+       ───────────────────────────────────────────────────────────────── */
+
+    .csg-chat-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--chat-primary) 0%, var(--chat-primary-dark) 100%);
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--chat-shadow), 0 0 0 0 rgba(63, 81, 181, 0.4);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: csg-pulse 2s infinite;
     }
-    /* 聊天窗口尺寸和圆角 */
-    #dify-chatbot-bubble-window {
-      width: 400px !important;
-      height: 580px !important;
-      border-radius: 16px !important;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+
+    @keyframes csg-pulse {
+      0%, 100% { box-shadow: var(--chat-shadow), 0 0 0 0 rgba(63, 81, 181, 0.4); }
+      50% { box-shadow: var(--chat-shadow), 0 0 0 8px rgba(63, 81, 181, 0); }
+    }
+
+    .csg-chat-btn:hover {
+      transform: scale(1.08);
+      box-shadow: var(--chat-shadow-lg);
+      animation: none;
+    }
+
+    .csg-chat-btn:active {
+      transform: scale(0.95);
+    }
+
+    .csg-chat-btn svg {
+      width: 28px;
+      height: 28px;
+      fill: white;
+      transition: transform 0.3s ease;
+    }
+
+    .csg-chat-btn:hover svg {
+      transform: rotate(-8deg);
+    }
+
+    .csg-chat-btn.is-open svg {
+      transform: rotate(180deg);
+    }
+
+    /* Unread badge */
+    .csg-chat-btn::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 12px;
+      height: 12px;
+      background: #EF4444;
+      border-radius: 50%;
+      border: 2px solid white;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.3s ease;
+    }
+
+    .csg-chat-btn.has-unread::after {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       Chat Window Container
+       ───────────────────────────────────────────────────────────────── */
+
+    .csg-chat-window {
+      position: fixed;
+      bottom: 100px;
+      right: 24px;
+      width: 400px;
+      height: 580px;
+      background: var(--chat-surface);
+      border-radius: 20px;
+      box-shadow: var(--chat-shadow-lg);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px) scale(0.95);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .csg-chat-window.is-open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       Chat Header
+       ───────────────────────────────────────────────────────────────── */
+
+    .csg-chat-header {
+      background: linear-gradient(135deg, var(--chat-primary) 0%, var(--chat-primary-dark) 100%);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle pattern overlay */
+    .csg-chat-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      opacity: 0.5;
+    }
+
+    .csg-chat-header-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .csg-chat-avatar {
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .csg-chat-title {
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .csg-chat-subtitle {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .csg-chat-actions {
+      display: flex;
+      gap: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .csg-chat-action-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: none;
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .csg-chat-action-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.05);
+    }
+
+    .csg-chat-action-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       Messages Container
+       ───────────────────────────────────────────────────────────────── */
+
+    .csg-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: var(--chat-bg);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      scroll-behavior: smooth;
+    }
+
+    /* Custom scrollbar */
+    .csg-chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .csg-chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .csg-chat-messages::-webkit-scrollbar-thumb {
+      background: var(--chat-border);
+      border-radius: 3px;
+    }
+
+    .csg-chat-messages::-webkit-scrollbar-thumb:hover {
+      background: var(--chat-text-secondary);
+    }
+
+    /* Welcome message */
+    .csg-chat-welcome {
+      text-align: center;
+      padding: 32px 20px;
+    }
+
+    .csg-chat-welcome-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, var(--chat-primary) 0%, var(--chat-primary-light) 100%);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 8px 24px rgba(63, 81, 181, 0.25);
+    }
+
+    .csg-chat-welcome h3 {
+      color: var(--chat-text);
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .csg-chat-welcome p {
+      color: var(--chat-text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       Message Bubbles
+       ───────────────────────────────────────────────────────────────── */
+
+    .csg-message {
+      display: flex;
+      gap: 10px;
+      max-width: 85%;
+      animation: csg-message-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes csg-message-in {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .csg-message.is-user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .csg-message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .csg-message.is-ai .csg-message-avatar {
+      background: var(--chat-primary);
+      color: white;
+    }
+
+    .csg-message.is-user .csg-message-avatar {
+      background: var(--chat-border);
+    }
+
+    .csg-message-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .csg-message-bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-wrap: break-word;
+    }
+
+    .csg-message.is-ai .csg-message-bubble {
+      background: var(--chat-surface);
+      color: var(--chat-text);
+      border-bottom-left-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .csg-message.is-user .csg-message-bubble {
+      background: var(--chat-user-bubble);
+      color: white;
+      border-bottom-right-radius: 6px;
+    }
+
+    .csg-message-time {
+      font-size: 11px;
+      color: var(--chat-text-secondary);
+      padding: 0 4px;
+    }
+
+    .csg-message.is-user .csg-message-time {
+      text-align: right;
+    }
+
+    /* Markdown styling in AI messages */
+    .csg-message-bubble p {
+      margin: 0 0 8px 0;
+    }
+
+    .csg-message-bubble p:last-child {
+      margin-bottom: 0;
+    }
+
+    .csg-message-bubble code {
+      background: rgba(0, 0, 0, 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: var(--code-font-family, monospace);
+      font-size: 13px;
+    }
+
+    .csg-message-bubble pre {
+      background: #1E293B;
+      color: #E2E8F0;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+    }
+
+    .csg-message-bubble pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    .csg-message-bubble ul,
+    .csg-message-bubble ol {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .csg-message-bubble li {
+      margin: 4px 0;
+    }
+
+    .csg-message-bubble a {
+      color: var(--chat-primary);
+      text-decoration: none;
+    }
+
+    .csg-message-bubble a:hover {
+      text-decoration: underline;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       Typing Indicator
+       ───────────────────────────────────────────────────────────────── */
+
+    .csg-typing {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .csg-typing-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--chat-text-secondary);
+      border-radius: 50%;
+      animation: csg-typing-bounce 1.4s infinite ease-in-out;
+    }
+
+    .csg-typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .csg-typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    .csg-typing-dot:nth-child(3) { animation-delay: 0s; }
+
+    @keyframes csg-typing-bounce {
+      0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+      }
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       Input Area
+       ───────────────────────────────────────────────────────────────── */
+
+    .csg-chat-input-area {
+      padding: 16px 20px;
+      background: var(--chat-surface);
+      border-top: 1px solid var(--chat-border);
+      flex-shrink: 0;
+    }
+
+    .csg-chat-input-wrapper {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .csg-chat-input {
+      flex: 1;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 12px 16px;
+      border: 2px solid var(--chat-border);
+      border-radius: 14px;
+      font-size: 14px;
+      font-family: inherit;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .csg-chat-input:focus {
+      border-color: var(--chat-primary);
+      box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+    }
+
+    .csg-chat-input::placeholder {
+      color: var(--chat-text-secondary);
+    }
+
+    .csg-chat-send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      border: none;
+      background: var(--chat-primary);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .csg-chat-send-btn:hover:not(:disabled) {
+      background: var(--chat-primary-dark);
+      transform: scale(1.05);
+    }
+
+    .csg-chat-send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .csg-chat-send-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       Mobile Styles - Bottom Sheet
+       ───────────────────────────────────────────────────────────────── */
+
+    @media (max-width: 767px) {
+      .csg-chat-btn {
+        bottom: 20px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+      }
+
+      .csg-chat-btn svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      .csg-chat-window {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 85vh;
+        max-height: 85vh;
+        border-radius: 24px 24px 0 0;
+        transform: translateY(100%);
+      }
+
+      .csg-chat-window.is-open {
+        transform: translateY(0);
+      }
+
+      /* Backdrop overlay */
+      .csg-chat-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        z-index: 9998;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .csg-chat-backdrop.is-visible {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      /* Drag handle */
+      .csg-chat-drag-handle {
+        display: flex;
+        justify-content: center;
+        padding: 12px 0 8px;
+        background: linear-gradient(135deg, var(--chat-primary) 0%, var(--chat-primary-dark) 100%);
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .csg-chat-drag-handle::before {
+        content: '';
+        width: 40px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 2px;
+      }
+
+      .csg-chat-header {
+        padding-top: 8px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .csg-chat-backdrop,
+      .csg-chat-drag-handle {
+        display: none;
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
+       Reduced Motion
+       ───────────────────────────────────────────────────────────────── */
+
+    @media (prefers-reduced-motion: reduce) {
+      .csg-chat-btn,
+      .csg-chat-window,
+      .csg-message,
+      .csg-typing-dot {
+        animation: none;
+        transition: none;
+      }
     }
   </style>
+
+  <!-- Chatbot HTML Structure -->
+  <div class="csg-chat-backdrop" id="csgBackdrop"></div>
+
+  <button class="csg-chat-btn" id="csgChatBtn" aria-label="打开聊天助手">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C6.48 2 2 6.48 2 12c0 1.54.36 2.98.97 4.29L2 22l5.71-.97C9.02 21.64 10.46 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2zm-1 14h2v2h-2v-2zm0-10h2v8h-2V6z"/>
+    </svg>
+  </button>
+
+  <div class="csg-chat-window" id="csgChatWindow" role="dialog" aria-label="聊天助手">
+    <!-- Drag handle for mobile -->
+    <div class="csg-chat-drag-handle" id="csgDragHandle"></div>
+
+    <!-- Header -->
+    <div class="csg-chat-header">
+      <div class="csg-chat-header-info">
+        <div class="csg-chat-avatar">📚</div>
+        <div>
+          <div class="csg-chat-title">藏书阁助手</div>
+          <div class="csg-chat-subtitle">有问必答，随时为您服务</div>
+        </div>
+      </div>
+      <div class="csg-chat-actions">
+        <button class="csg-chat-action-btn" id="csgClearBtn" title="清空对话">
+          <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </button>
+        <button class="csg-chat-action-btn" id="csgCloseBtn" title="关闭">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="csg-chat-messages" id="csgMessages">
+      <div class="csg-chat-welcome">
+        <div class="csg-chat-welcome-icon">📖</div>
+        <h3>欢迎来到藏书阁</h3>
+        <p>我是您的阅读助手，可以帮您解答关于书籍内容的问题，或者推荐相关阅读材料。请问有什么可以帮您的？</p>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="csg-chat-input-area">
+      <div class="csg-chat-input-wrapper">
+        <textarea
+          class="csg-chat-input"
+          id="csgInput"
+          placeholder="输入您的问题..."
+          rows="1"
+          aria-label="消息输入"
+        ></textarea>
+        <button class="csg-chat-send-btn" id="csgSendBtn" aria-label="发送消息">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chatbot JavaScript -->
+  <script>
+  (function() {
+    'use strict';
+
+    // ═══════════════════════════════════════════════════════════════
+    // Configuration
+    // ═══════════════════════════════════════════════════════════════
+
+    const BASE_CONFIG = {
+      // Cloudflare Worker 代理地址
+      proxyUrl: 'https://bookstore-chat.james-hobby-tan.workers.dev',
+      maxHistoryLength: 50,
+      user: 'bookstore-user-' + (localStorage.getItem('csg_user_id') || (() => {
+        const id = Math.random().toString(36).substring(7);
+        localStorage.setItem('csg_user_id', id);
+        return id;
+      })())
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // State
+    // ═══════════════════════════════════════════════════════════════
+
+    let currentBookPath = null;
+    let bookConfig = null;
+    let conversationId = '';
+    let isStreaming = false;
+    let currentStreamMessage = null;
+
+    // ═══════════════════════════════════════════════════════════════
+    // DOM Elements
+    // ═══════════════════════════════════════════════════════════════
+
+    const chatBtn = document.getElementById('csgChatBtn');
+    const chatWindow = document.getElementById('csgChatWindow');
+    const backdrop = document.getElementById('csgBackdrop');
+    const closeBtn = document.getElementById('csgCloseBtn');
+    const clearBtn = document.getElementById('csgClearBtn');
+    const messagesContainer = document.getElementById('csgMessages');
+    const input = document.getElementById('csgInput');
+    const sendBtn = document.getElementById('csgSendBtn');
+    const dragHandle = document.getElementById('csgDragHandle');
+    const chatTitle = document.querySelector('.csg-chat-title');
+    const chatSubtitle = document.querySelector('.csg-chat-subtitle');
+
+    // ═══════════════════════════════════════════════════════════════
+    // Book Detection & Config Loading
+    // ═══════════════════════════════════════════════════════════════
+
+    function getBookPathFromHash() {
+      const hash = window.location.hash || '';
+      // Match patterns like #/books/book-name/ or #/books/book-name/chapter
+      const match = hash.match(/^#\/books\/([^\/]+)/);
+      return match ? match[1] : null;
+    }
+
+    function getStorageKey(bookPath, suffix) {
+      return `csg_${bookPath}_${suffix}`;
+    }
+
+    async function loadBookConfig(bookPath) {
+      try {
+        const response = await fetch(`/books/${bookPath}/_chatbot.json`);
+        if (!response.ok) return null;
+        const config = await response.json();
+        return config.enabled ? config : null;
+      } catch (e) {
+        console.log(`No chatbot config for book: ${bookPath}`);
+        return null;
+      }
+    }
+
+    function updateUIWithConfig(config) {
+      if (!config) return;
+
+      // Update header
+      if (chatTitle && config.title) {
+        chatTitle.textContent = config.title;
+      }
+      if (chatSubtitle && config.subtitle) {
+        chatSubtitle.textContent = config.subtitle;
+      }
+
+      // Update welcome message
+      const welcomeTitle = config.welcomeTitle || '欢迎';
+      const welcomeMessage = config.welcomeMessage || '有什么可以帮您的？';
+
+      messagesContainer.innerHTML = `
+        <div class="csg-chat-welcome">
+          <div class="csg-chat-welcome-icon">📖</div>
+          <h3>${escapeHtml(welcomeTitle)}</h3>
+          <p>${escapeHtml(welcomeMessage)}</p>
+        </div>
+      `;
+    }
+
+    function showChatbot() {
+      chatBtn.style.display = 'flex';
+    }
+
+    function hideChatbot() {
+      chatBtn.style.display = 'none';
+      closeChat();
+    }
+
+    async function handleRouteChange() {
+      const newBookPath = getBookPathFromHash();
+
+      // If same book, do nothing
+      if (newBookPath === currentBookPath) return;
+
+      // Close chat window when changing books
+      closeChat();
+
+      // If not on a book page, hide chatbot
+      if (!newBookPath) {
+        currentBookPath = null;
+        bookConfig = null;
+        hideChatbot();
+        return;
+      }
+
+      // Try to load book config
+      const config = await loadBookConfig(newBookPath);
+
+      if (!config) {
+        currentBookPath = null;
+        bookConfig = null;
+        hideChatbot();
+        return;
+      }
+
+      // Book has chatbot enabled
+      currentBookPath = newBookPath;
+      bookConfig = config;
+
+      // Load conversation ID for this book
+      conversationId = localStorage.getItem(getStorageKey(currentBookPath, 'conversation_id')) || '';
+
+      // Update UI
+      updateUIWithConfig(config);
+      restoreHistory();
+      showChatbot();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Utilities
+    // ═══════════════════════════════════════════════════════════════
+
+    function formatTime(date) {
+      return new Intl.DateTimeFormat('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function renderMarkdown(text) {
+      if (typeof marked !== 'undefined') {
+        marked.setOptions({
+          breaks: true,
+          gfm: true
+        });
+        return marked.parse(text);
+      }
+      return escapeHtml(text).replace(/\n/g, '<br>');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Storage (Per-Book)
+    // ═══════════════════════════════════════════════════════════════
+
+    function loadHistory() {
+      if (!currentBookPath) return [];
+      try {
+        const history = localStorage.getItem(getStorageKey(currentBookPath, 'history'));
+        return history ? JSON.parse(history) : [];
+      } catch (e) {
+        console.error('Failed to load chat history:', e);
+        return [];
+      }
+    }
+
+    function saveHistory(messages) {
+      if (!currentBookPath) return;
+      try {
+        const trimmed = messages.slice(-BASE_CONFIG.maxHistoryLength);
+        localStorage.setItem(getStorageKey(currentBookPath, 'history'), JSON.stringify(trimmed));
+      } catch (e) {
+        console.error('Failed to save chat history:', e);
+      }
+    }
+
+    function clearHistory() {
+      if (!currentBookPath) return;
+      localStorage.removeItem(getStorageKey(currentBookPath, 'history'));
+      localStorage.removeItem(getStorageKey(currentBookPath, 'conversation_id'));
+      conversationId = '';
+      updateUIWithConfig(bookConfig);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Message Rendering
+    // ═══════════════════════════════════════════════════════════════
+
+    function createMessageElement(role, content, time) {
+      const isUser = role === 'user';
+      const messageEl = document.createElement('div');
+      messageEl.className = `csg-message ${isUser ? 'is-user' : 'is-ai'}`;
+
+      messageEl.innerHTML = `
+        <div class="csg-message-avatar">${isUser ? '👤' : '📚'}</div>
+        <div class="csg-message-content">
+          <div class="csg-message-bubble">${isUser ? escapeHtml(content) : renderMarkdown(content)}</div>
+          <span class="csg-message-time">${time || formatTime(new Date())}</span>
+        </div>
+      `;
+
+      return messageEl;
+    }
+
+    function createTypingIndicator() {
+      const el = document.createElement('div');
+      el.className = 'csg-message is-ai';
+      el.id = 'csgTyping';
+      el.innerHTML = `
+        <div class="csg-message-avatar">📚</div>
+        <div class="csg-message-content">
+          <div class="csg-message-bubble">
+            <div class="csg-typing">
+              <span class="csg-typing-dot"></span>
+              <span class="csg-typing-dot"></span>
+              <span class="csg-typing-dot"></span>
+            </div>
+          </div>
+        </div>
+      `;
+      return el;
+    }
+
+    function addMessage(role, content, save = true) {
+      // Remove welcome message if present
+      const welcome = messagesContainer.querySelector('.csg-chat-welcome');
+      if (welcome) welcome.remove();
+
+      const messageEl = createMessageElement(role, content);
+      messagesContainer.appendChild(messageEl);
+      scrollToBottom();
+
+      if (save) {
+        const history = loadHistory();
+        history.push({
+          role,
+          content,
+          time: formatTime(new Date()),
+          timestamp: Date.now()
+        });
+        saveHistory(history);
+      }
+
+      return messageEl;
+    }
+
+    function updateStreamingMessage(content) {
+      if (!currentStreamMessage) {
+        const welcome = messagesContainer.querySelector('.csg-chat-welcome');
+        if (welcome) welcome.remove();
+
+        currentStreamMessage = createMessageElement('assistant', content);
+        messagesContainer.appendChild(currentStreamMessage);
+      } else {
+        const bubble = currentStreamMessage.querySelector('.csg-message-bubble');
+        if (bubble) {
+          bubble.innerHTML = renderMarkdown(content);
+        }
+      }
+      scrollToBottom();
+    }
+
+    function finalizeStreamingMessage(content) {
+      if (currentStreamMessage) {
+        const history = loadHistory();
+        history.push({
+          role: 'assistant',
+          content,
+          time: formatTime(new Date()),
+          timestamp: Date.now()
+        });
+        saveHistory(history);
+      }
+      currentStreamMessage = null;
+    }
+
+    function scrollToBottom() {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function restoreHistory() {
+      const history = loadHistory();
+      if (history.length === 0) return;
+
+      // Remove welcome message
+      const welcome = messagesContainer.querySelector('.csg-chat-welcome');
+      if (welcome) welcome.remove();
+
+      history.forEach(msg => {
+        const el = createMessageElement(msg.role, msg.content, msg.time);
+        messagesContainer.appendChild(el);
+      });
+
+      scrollToBottom();
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // API Integration
+    // ═══════════════════════════════════════════════════════════════
+
+    async function sendMessage(userMessage) {
+      if (isStreaming || !userMessage.trim() || !bookConfig) return;
+
+      isStreaming = true;
+      sendBtn.disabled = true;
+      input.disabled = true;
+
+      // Add user message
+      addMessage('user', userMessage);
+
+      // Show typing indicator
+      const typingEl = createTypingIndicator();
+      messagesContainer.appendChild(typingEl);
+      scrollToBottom();
+
+      let fullResponse = '';
+
+      try {
+        // 通过 Cloudflare Worker 代理调用 Dify API
+        const response = await fetch(BASE_CONFIG.proxyUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookId: currentBookPath,  // Worker 用这个查找 API Key
+            query: userMessage,
+            conversationId: conversationId,
+            user: BASE_CONFIG.user
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`);
+        }
+
+        // Remove typing indicator
+        typingEl.remove();
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+
+                // Handle conversation_id
+                if (parsed.conversation_id && !conversationId) {
+                  conversationId = parsed.conversation_id;
+                  localStorage.setItem(getStorageKey(currentBookPath, 'conversation_id'), conversationId);
+                }
+
+                // Handle message content
+                if (parsed.event === 'message' && parsed.answer) {
+                  fullResponse += parsed.answer;
+                  updateStreamingMessage(fullResponse);
+                } else if (parsed.event === 'agent_message' && parsed.answer) {
+                  fullResponse += parsed.answer;
+                  updateStreamingMessage(fullResponse);
+                }
+              } catch (e) {
+                // Ignore JSON parse errors for incomplete chunks
+              }
+            }
+          }
+        }
+
+        // Finalize the message
+        if (fullResponse) {
+          finalizeStreamingMessage(fullResponse);
+        }
+
+      } catch (error) {
+        console.error('Chat error:', error);
+        typingEl.remove();
+        addMessage('assistant', '抱歉，发生了错误。请稍后再试。', false);
+      } finally {
+        isStreaming = false;
+        sendBtn.disabled = false;
+        input.disabled = false;
+        input.focus();
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // UI Event Handlers
+    // ═══════════════════════════════════════════════════════════════
+
+    function openChat() {
+      chatWindow.classList.add('is-open');
+      backdrop.classList.add('is-visible');
+      chatBtn.classList.add('is-open');
+      chatBtn.classList.remove('has-unread');
+      input.focus();
+      scrollToBottom();
+    }
+
+    function closeChat() {
+      chatWindow.classList.remove('is-open');
+      backdrop.classList.remove('is-visible');
+      chatBtn.classList.remove('is-open');
+    }
+
+    function toggleChat() {
+      if (chatWindow.classList.contains('is-open')) {
+        closeChat();
+      } else {
+        openChat();
+      }
+    }
+
+    function handleSend() {
+      const message = input.value.trim();
+      if (message && !isStreaming) {
+        input.value = '';
+        input.style.height = 'auto';
+        sendMessage(message);
+      }
+    }
+
+    // Auto-resize textarea
+    function autoResize() {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    }
+
+    // Mobile swipe-to-dismiss
+    let touchStartY = 0;
+    let touchCurrentY = 0;
+
+    function handleTouchStart(e) {
+      touchStartY = e.touches[0].clientY;
+      touchCurrentY = touchStartY;
+    }
+
+    function handleTouchMove(e) {
+      touchCurrentY = e.touches[0].clientY;
+      const diff = touchCurrentY - touchStartY;
+
+      if (diff > 0) {
+        chatWindow.style.transform = `translateY(${diff}px)`;
+      }
+    }
+
+    function handleTouchEnd() {
+      const diff = touchCurrentY - touchStartY;
+      chatWindow.style.transform = '';
+
+      if (diff > 100) {
+        closeChat();
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Initialize
+    // ═══════════════════════════════════════════════════════════════
+
+    function init() {
+      // Hide chatbot by default
+      hideChatbot();
+
+      // Event listeners
+      chatBtn.addEventListener('click', toggleChat);
+      closeBtn.addEventListener('click', closeChat);
+      backdrop.addEventListener('click', closeChat);
+      clearBtn.addEventListener('click', () => {
+        if (confirm('确定要清空对话历史吗？')) {
+          clearHistory();
+        }
+      });
+
+      sendBtn.addEventListener('click', handleSend);
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          handleSend();
+        }
+      });
+
+      input.addEventListener('input', autoResize);
+
+      // Mobile touch events for drag handle
+      if (dragHandle) {
+        dragHandle.addEventListener('touchstart', handleTouchStart, { passive: true });
+        dragHandle.addEventListener('touchmove', handleTouchMove, { passive: true });
+        dragHandle.addEventListener('touchend', handleTouchEnd, { passive: true });
+      }
+
+      // Keyboard shortcut (Escape to close)
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && chatWindow.classList.contains('is-open')) {
+          closeChat();
+        }
+      });
+
+      // Listen for route changes (Docsify uses hashchange)
+      window.addEventListener('hashchange', handleRouteChange);
+
+      // Initial route check
+      handleRouteChange();
+    }
+
+    // Wait for DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+  })();
+  </script>
 </body>
 </html>
