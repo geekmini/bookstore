@@ -581,6 +581,107 @@
       text-decoration: underline;
     }
 
+    /* Markdown Elements - Tables */
+    .csg-answer-content {
+      overflow-x: auto;  /* Enable horizontal scroll for wide tables */
+    }
+
+    .csg-answer-content table {
+      width: 100%;
+      min-width: 300px;  /* Minimum width to trigger scroll on narrow screens */
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+
+    .csg-answer-content th,
+    .csg-answer-content td {
+      border: 1px solid var(--chat-border, #e0e0e0);
+      padding: 8px 12px;
+      text-align: left;
+    }
+
+    .csg-answer-content th {
+      background: var(--chat-surface-secondary, #f5f5f5);
+      font-weight: 600;
+    }
+
+    .csg-answer-content tr:hover {
+      background: var(--chat-surface-hover, #fafafa);
+    }
+
+    /* Markdown Elements - Code Blocks */
+    .csg-answer-content pre {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 12px 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 12px 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .csg-answer-content pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+      font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+    }
+
+    .csg-answer-content code {
+      background: rgba(0, 0, 0, 0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+      font-size: 13px;
+    }
+
+    /* Markdown Elements - Blockquotes */
+    .csg-answer-content blockquote {
+      border-left: 4px solid var(--chat-primary, #5c6bc0);
+      margin: 12px 0;
+      padding: 8px 16px;
+      background: var(--chat-surface-secondary, #f5f5f5);
+      color: var(--chat-text-secondary, #666);
+    }
+
+    .csg-answer-content blockquote p {
+      margin: 0;
+    }
+
+    /* Markdown Elements - Lists */
+    .csg-answer-content ul,
+    .csg-answer-content ol {
+      margin: 8px 0;
+      padding-left: 24px;
+    }
+
+    .csg-answer-content li {
+      margin: 4px 0;
+    }
+
+    /* Markdown Elements - Headings */
+    .csg-answer-content h1,
+    .csg-answer-content h2,
+    .csg-answer-content h3,
+    .csg-answer-content h4 {
+      margin: 16px 0 8px 0;
+      font-weight: 600;
+    }
+
+    .csg-answer-content h1 { font-size: 1.4em; }
+    .csg-answer-content h2 { font-size: 1.2em; }
+    .csg-answer-content h3 { font-size: 1.1em; }
+    .csg-answer-content h4 { font-size: 1em; }
+
+    /* Markdown Elements - Horizontal Rule */
+    .csg-answer-content hr {
+      border: none;
+      border-top: 1px solid var(--chat-border, #e0e0e0);
+      margin: 16px 0;
+    }
+
     /* ─────────────────────────────────────────────────────────────────
        Typing Indicator
        ───────────────────────────────────────────────────────────────── */
@@ -1345,17 +1446,19 @@
         }
       }
 
-      // Handle answer content area
+      // Handle answer content area - show plain text during streaming
       if (parsed.displayContent) {
         if (!contentArea) {
           contentArea = document.createElement('div');
           contentArea.className = 'csg-answer-content';
+          contentArea.style.whiteSpace = 'pre-wrap';  // Preserve line breaks in plain text
           bubble.appendChild(contentArea);
         }
-        contentArea.innerHTML = renderMarkdown(parsed.displayContent);
+        // During streaming: show plain text (Markdown will be rendered on finalize)
+        contentArea.textContent = parsed.displayContent;
       } else if (contentArea) {
         // Clear content area if no display content
-        contentArea.innerHTML = '';
+        contentArea.textContent = '';
       }
     }
 
@@ -1424,6 +1527,13 @@
           if (section) {
             section.classList.remove('is-thinking');
           }
+        }
+
+        // Final Markdown rendering - convert plain text to formatted HTML
+        const contentArea = currentStreamMessage.querySelector('.csg-answer-content');
+        if (contentArea && parsed.displayContent) {
+          contentArea.style.whiteSpace = '';  // Remove pre-wrap for proper Markdown rendering
+          contentArea.innerHTML = renderMarkdown(parsed.displayContent);
         }
 
         const history = loadHistory();
