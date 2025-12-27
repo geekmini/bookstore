@@ -505,8 +505,6 @@
       overflow-wrap: break-word;
       word-break: normal;
       line-break: strict;
-      text-align: justify;
-      text-justify: inter-ideograph;
     }
 
     .csg-message.is-ai .csg-message-bubble {
@@ -1103,25 +1101,20 @@
 
       let fixed = text;
 
-      // Fix unclosed bold markers: **text without closing **
-      // Count ** occurrences - if odd, the last one is unclosed
-      const boldMatches = fixed.match(/\*\*/g);
-      if (boldMatches && boldMatches.length % 2 !== 0) {
-        // Find the last ** and close it at end of that line or add closing **
-        fixed = fixed.replace(/\*\*([^*\n]+)$/gm, '**$1**');
-      }
+      // Remove all orphan ** (not part of valid bold pair)
+      // First, temporarily replace valid **text** pairs
+      const validBolds = [];
+      fixed = fixed.replace(/\*\*([^*\n]+?)\*\*/g, (match) => {
+        validBolds.push(match);
+        return `__VALID_BOLD_${validBolds.length - 1}__`;
+      });
 
-      // Fix bold markers split across content: **text** but with issues
-      // Pattern: **word at start of line without closing
-      fixed = fixed.replace(/^\*\*([^*\n]+)$/gm, '**$1**');
+      // Now remove any remaining **
+      fixed = fixed.replace(/\*\*/g, '');
 
-      // Fix cases like "**什么是" becoming display issues
-      // Ensure ** pairs are properly closed within reasonable distance
-      fixed = fixed.replace(/\*\*([^*]{1,50}?)(?=\n|$)/g, (match, content) => {
-        if (!content.includes('**')) {
-          return '**' + content + '**';
-        }
-        return match;
+      // Restore valid bold pairs
+      validBolds.forEach((bold, i) => {
+        fixed = fixed.replace(`__VALID_BOLD_${i}__`, bold);
       });
 
       // Fix list items that start with -word (missing space after -)
@@ -1133,9 +1126,17 @@
         fixed = fixed.replace(/`([^`\n]+)$/gm, '`$1`');
       }
 
-      // Remove orphan ** at line start or end
-      fixed = fixed.replace(/^\*\*\s*$/gm, '');
-      fixed = fixed.replace(/^\*\*(?!\S)/gm, '');
+      // Fix malformed tables: ensure header and separator are on separate lines
+      // Pattern: | col | col |------|------| -> | col | col |\n|------|------|
+      fixed = fixed.replace(/(\|[^|\n]+\|)\s*(\|-+)/g, '$1\n$2');
+
+      // Fix table separator missing closing |
+      fixed = fixed.replace(/^(\|[-|]+)([^|\n]*)$/gm, (match, sep) => {
+        if (!sep.endsWith('|')) {
+          return sep + '|';
+        }
+        return match;
+      });
 
       return fixed;
     }
