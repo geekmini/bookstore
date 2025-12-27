@@ -957,6 +957,7 @@
     let isStreaming = false;
     let currentStreamMessage = null;
     let thinkingStartTime = null;
+    let capturedThinkingDuration = null;  // Capture duration when thinking completes
 
     // ═══════════════════════════════════════════════════════════════
     // DOM Elements
@@ -1125,7 +1126,17 @@
 
       const thinking = thinkMatch[1];
       const isThinkingComplete = rawContent.includes('</think>');
-      const displayContent = rawContent.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+
+      // Calculate displayContent based on thinking completion status
+      let displayContent;
+      if (isThinkingComplete) {
+        // Remove the complete <think>...</think> block
+        displayContent = rawContent.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+      } else {
+        // During streaming, remove everything from <think> to end
+        // since all content after <think> is still thinking content
+        displayContent = rawContent.replace(/<think>[\s\S]*$/, '').trim();
+      }
 
       return {
         hasThinking: true,
@@ -1191,7 +1202,8 @@
           bubbleContent += createThinkingSection(thinking, true, thinkingDuration);
         }
         // Content is already cleaned (no <think> tags) when stored in history
-        bubbleContent += renderMarkdown(content);
+        // Wrap in csg-answer-content for consistency with streaming updates
+        bubbleContent += `<div class="csg-answer-content">${renderMarkdown(content)}</div>`;
       }
 
       messageEl.innerHTML = `
@@ -1245,18 +1257,55 @@
       const bubble = messageEl.querySelector('.csg-message-bubble');
       if (!bubble) return;
 
-      let html = '';
+      // Check if thinking section already exists
+      let thinkingSection = bubble.querySelector('.csg-thinking-section');
+      let contentArea = bubble.querySelector('.csg-answer-content');
 
       if (parsed.hasThinking) {
-        const duration = parsed.isThinkingComplete ? getThinkingDuration() : null;
-        html += createThinkingSection(parsed.thinking, parsed.isThinkingComplete, duration);
+        if (!thinkingSection) {
+          // Create thinking section for the first time
+          thinkingSection = document.createElement('div');
+          thinkingSection.className = 'csg-thinking-section is-thinking';
+          thinkingSection.innerHTML = `
+            <div class="csg-thinking-header">
+              <span class="csg-thinking-status">💭 思考中...</span>
+              <span class="csg-thinking-toggle">▼</span>
+            </div>
+            <div class="csg-thinking-content"></div>
+          `;
+          bubble.insertBefore(thinkingSection, bubble.firstChild);
+        }
+
+        // Update only the thinking content (not the whole section to preserve animation)
+        const thinkingContent = thinkingSection.querySelector('.csg-thinking-content');
+        if (thinkingContent) {
+          thinkingContent.textContent = parsed.thinking;
+        }
+
+        // Update status when thinking completes (only capture duration once)
+        if (parsed.isThinkingComplete && !capturedThinkingDuration) {
+          // Capture the duration at the moment thinking completes
+          capturedThinkingDuration = getThinkingDuration();
+          thinkingSection.classList.remove('is-thinking');
+          const statusEl = thinkingSection.querySelector('.csg-thinking-status');
+          if (statusEl) {
+            statusEl.textContent = `💭 已深度思考 (${capturedThinkingDuration}s)`;
+          }
+        }
       }
 
+      // Handle answer content area
       if (parsed.displayContent) {
-        html += renderMarkdown(parsed.displayContent);
+        if (!contentArea) {
+          contentArea = document.createElement('div');
+          contentArea.className = 'csg-answer-content';
+          bubble.appendChild(contentArea);
+        }
+        contentArea.innerHTML = renderMarkdown(parsed.displayContent);
+      } else if (contentArea) {
+        // Clear content area if no display content
+        contentArea.innerHTML = '';
       }
-
-      bubble.innerHTML = html;
     }
 
     function addMessage(role, content, save = true) {
@@ -1305,7 +1354,8 @@
     function finalizeStreamingMessage(content) {
       if (currentStreamMessage) {
         const parsed = parseThinkingContent(content);
-        const duration = thinkingStartTime ? getThinkingDuration() : null;
+        // Use captured duration (from when </think> was received) instead of current time
+        const duration = capturedThinkingDuration || (thinkingStartTime ? getThinkingDuration() : null);
 
         // Update final display with correct duration
         if (parsed.hasThinking && duration) {
@@ -1313,7 +1363,7 @@
             ...parsed,
             isThinkingComplete: true
           });
-          // Update the duration text
+          // Ensure the duration text shows the captured duration
           const statusEl = currentStreamMessage.querySelector('.csg-thinking-status');
           if (statusEl) {
             statusEl.textContent = `💭 已深度思考 (${duration}s)`;
@@ -1338,6 +1388,7 @@
       }
       currentStreamMessage = null;
       thinkingStartTime = null;
+      capturedThinkingDuration = null;  // Reset for next message
     }
 
     function scrollToBottom() {
