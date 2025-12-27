@@ -1,13 +1,11 @@
 /**
  * 藏书阁 Dify API 代理
  * 部署到 Cloudflare Workers，保护 API Key 不暴露
+ *
+ * 架构：单个 Dify App + 多知识库
+ * - 只需配置一个环境变量：DIFY_API_KEY
+ * - 通过 inputs 传递书籍上下文，Dify 根据上下文检索对应知识库
  */
-
-// ============================================
-// 配置：每本书的 API Key（在 Cloudflare 后台配置为环境变量）
-// ============================================
-// 环境变量名格式：BOOK_<book-id>_KEY
-// 例如：BOOK_QI_TI_YUAN_LIU_KEY = "app-xxxxx"
 
 const DIFY_API_URL = 'https://api.dify.ai/v1/chat-messages';
 
@@ -44,7 +42,7 @@ export default {
 
       // 解析请求体
       const body = await request.json();
-      const { bookId, query, conversationId, user } = body;
+      const { bookId, bookTitle, query, conversationId, user } = body;
 
       if (!bookId || !query) {
         return new Response(JSON.stringify({ error: 'Missing bookId or query' }), {
@@ -53,20 +51,18 @@ export default {
         });
       }
 
-      // 从环境变量获取 API Key
-      // 将 book-id 转换为环境变量名：qi-ti-yuan-liu -> BOOK_QI_TI_YUAN_LIU_KEY
-      const envKey = `BOOK_${bookId.toUpperCase().replace(/-/g, '_')}_KEY`;
-      const apiKey = env[envKey];
+      // 使用单一 API Key
+      const apiKey = env.DIFY_API_KEY;
 
       if (!apiKey) {
-        console.error(`API key not found for book: ${bookId}, env key: ${envKey}`);
-        return new Response(JSON.stringify({ error: 'Book not configured' }), {
-          status: 404,
+        console.error('DIFY_API_KEY not configured');
+        return new Response(JSON.stringify({ error: 'API not configured' }), {
+          status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
       }
 
-      // 调用 Dify API
+      // 调用 Dify API，通过 inputs 传递书籍上下文
       const difyResponse = await fetch(DIFY_API_URL, {
         method: 'POST',
         headers: {
@@ -74,7 +70,10 @@ export default {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          inputs: {},
+          inputs: {
+            book_id: bookId,
+            book_title: bookTitle || bookId,
+          },
           query: query,
           response_mode: 'streaming',
           conversation_id: conversationId || '',

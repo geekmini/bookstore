@@ -1180,7 +1180,8 @@
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            bookId: currentBookPath,  // Worker 用这个查找 API Key
+            bookId: currentBookPath,
+            bookTitle: bookConfig?.bookTitle || bookConfig?.title || currentBookPath,
             query: userMessage,
             conversationId: conversationId,
             user: BASE_CONFIG.user
