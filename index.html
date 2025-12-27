@@ -612,6 +612,98 @@
     }
 
     /* ─────────────────────────────────────────────────────────────────
+       Thinking Section
+       ───────────────────────────────────────────────────────────────── */
+
+    .csg-thinking-section {
+      margin-bottom: 12px;
+      border: 1px solid var(--chat-border);
+      border-left: 3px solid var(--chat-primary);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #F9FAFB;
+    }
+
+    .csg-thinking-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #F3F4F6;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s ease;
+    }
+
+    .csg-thinking-header:hover {
+      background: #E5E7EB;
+    }
+
+    .csg-thinking-status {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--chat-primary);
+    }
+
+    .csg-thinking-section.is-thinking .csg-thinking-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .csg-thinking-section.is-thinking .csg-thinking-status::after {
+      content: '';
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--chat-primary);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: csg-thinking-spin 0.8s linear infinite;
+    }
+
+    @keyframes csg-thinking-spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .csg-thinking-toggle {
+      font-size: 12px;
+      color: var(--chat-text-secondary);
+      transition: transform 0.2s ease;
+    }
+
+    .csg-thinking-section.is-expanded .csg-thinking-toggle {
+      transform: rotate(180deg);
+    }
+
+    .csg-thinking-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--chat-text-secondary);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .csg-thinking-section.is-expanded .csg-thinking-content {
+      max-height: 400px;
+      padding: 8px 12px 12px;
+      overflow-y: auto;
+    }
+
+    .csg-thinking-content::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .csg-thinking-content::-webkit-scrollbar-thumb {
+      background: var(--chat-border);
+      border-radius: 2px;
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
        Input Area
        ───────────────────────────────────────────────────────────────── */
 
@@ -864,6 +956,7 @@
     let conversationId = '';
     let isStreaming = false;
     let currentStreamMessage = null;
+    let thinkingStartTime = null;
 
     // ═══════════════════════════════════════════════════════════════
     // DOM Elements
@@ -1009,6 +1102,44 @@
       return escapeHtml(text).replace(/\n/g, '<br>');
     }
 
+    // Parse thinking content from response
+    function parseThinkingContent(rawContent) {
+      if (!rawContent || !rawContent.includes('<think>')) {
+        return {
+          hasThinking: false,
+          thinking: '',
+          displayContent: rawContent || '',
+          isThinkingComplete: false
+        };
+      }
+
+      const thinkMatch = rawContent.match(/<think>([\s\S]*?)(<\/think>|$)/);
+      if (!thinkMatch) {
+        return {
+          hasThinking: false,
+          thinking: '',
+          displayContent: rawContent,
+          isThinkingComplete: false
+        };
+      }
+
+      const thinking = thinkMatch[1];
+      const isThinkingComplete = rawContent.includes('</think>');
+      const displayContent = rawContent.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+
+      return {
+        hasThinking: true,
+        thinking,
+        displayContent,
+        isThinkingComplete
+      };
+    }
+
+    function getThinkingDuration() {
+      if (!thinkingStartTime) return 0;
+      return ((Date.now() - thinkingStartTime) / 1000).toFixed(1);
+    }
+
     // ═══════════════════════════════════════════════════════════════
     // Storage (Per-Book)
     // ═══════════════════════════════════════════════════════════════
@@ -1046,15 +1177,27 @@
     // Message Rendering
     // ═══════════════════════════════════════════════════════════════
 
-    function createMessageElement(role, content, time) {
+    function createMessageElement(role, content, time, thinking = null, thinkingDuration = null) {
       const isUser = role === 'user';
       const messageEl = document.createElement('div');
       messageEl.className = `csg-message ${isUser ? 'is-user' : 'is-ai'}`;
 
+      let bubbleContent = '';
+      if (isUser) {
+        bubbleContent = escapeHtml(content);
+      } else {
+        // Handle thinking content for historical messages
+        if (thinking) {
+          bubbleContent += createThinkingSection(thinking, true, thinkingDuration);
+        }
+        // Content is already cleaned (no <think> tags) when stored in history
+        bubbleContent += renderMarkdown(content);
+      }
+
       messageEl.innerHTML = `
         <div class="csg-message-avatar">${isUser ? '👤' : '📚'}</div>
         <div class="csg-message-content">
-          <div class="csg-message-bubble">${isUser ? escapeHtml(content) : renderMarkdown(content)}</div>
+          <div class="csg-message-bubble">${bubbleContent}</div>
           <span class="csg-message-time">${time || formatTime(new Date())}</span>
         </div>
       `;
@@ -1081,6 +1224,41 @@
       return el;
     }
 
+    function createThinkingSection(thinking, isComplete, duration) {
+      const statusText = isComplete
+        ? `💭 已深度思考 (${duration || '?'}s)`
+        : '💭 思考中...';
+      const thinkingClass = isComplete ? '' : 'is-thinking';
+
+      return `
+        <div class="csg-thinking-section ${thinkingClass}">
+          <div class="csg-thinking-header">
+            <span class="csg-thinking-status">${statusText}</span>
+            <span class="csg-thinking-toggle">▼</span>
+          </div>
+          <div class="csg-thinking-content">${escapeHtml(thinking)}</div>
+        </div>
+      `;
+    }
+
+    function updateMessageBubble(messageEl, rawContent, parsed) {
+      const bubble = messageEl.querySelector('.csg-message-bubble');
+      if (!bubble) return;
+
+      let html = '';
+
+      if (parsed.hasThinking) {
+        const duration = parsed.isThinkingComplete ? getThinkingDuration() : null;
+        html += createThinkingSection(parsed.thinking, parsed.isThinkingComplete, duration);
+      }
+
+      if (parsed.displayContent) {
+        html += renderMarkdown(parsed.displayContent);
+      }
+
+      bubble.innerHTML = html;
+    }
+
     function addMessage(role, content, save = true) {
       // Remove welcome message if present
       const welcome = messagesContainer.querySelector('.csg-chat-welcome');
@@ -1105,33 +1283,61 @@
     }
 
     function updateStreamingMessage(content) {
+      const parsed = parseThinkingContent(content);
+
+      // Start thinking timer when first <think> is detected
+      if (parsed.hasThinking && !thinkingStartTime) {
+        thinkingStartTime = Date.now();
+      }
+
       if (!currentStreamMessage) {
         const welcome = messagesContainer.querySelector('.csg-chat-welcome');
         if (welcome) welcome.remove();
 
-        currentStreamMessage = createMessageElement('assistant', content);
+        currentStreamMessage = createMessageElement('assistant', '');
         messagesContainer.appendChild(currentStreamMessage);
-      } else {
-        const bubble = currentStreamMessage.querySelector('.csg-message-bubble');
-        if (bubble) {
-          bubble.innerHTML = renderMarkdown(content);
-        }
       }
+
+      updateMessageBubble(currentStreamMessage, content, parsed);
       scrollToBottom();
     }
 
     function finalizeStreamingMessage(content) {
       if (currentStreamMessage) {
+        const parsed = parseThinkingContent(content);
+        const duration = thinkingStartTime ? getThinkingDuration() : null;
+
+        // Update final display with correct duration
+        if (parsed.hasThinking && duration) {
+          updateMessageBubble(currentStreamMessage, content, {
+            ...parsed,
+            isThinkingComplete: true
+          });
+          // Update the duration text
+          const statusEl = currentStreamMessage.querySelector('.csg-thinking-status');
+          if (statusEl) {
+            statusEl.textContent = `💭 已深度思考 (${duration}s)`;
+          }
+          // Remove spinning animation
+          const section = currentStreamMessage.querySelector('.csg-thinking-section');
+          if (section) {
+            section.classList.remove('is-thinking');
+          }
+        }
+
         const history = loadHistory();
         history.push({
           role: 'assistant',
-          content,
+          content: parsed.displayContent || content,  // Store cleaned content without <think> tags
+          thinking: parsed.thinking || null,
+          thinkingDuration: duration,
           time: formatTime(new Date()),
           timestamp: Date.now()
         });
         saveHistory(history);
       }
       currentStreamMessage = null;
+      thinkingStartTime = null;
     }
 
     function scrollToBottom() {
@@ -1147,7 +1353,7 @@
       if (welcome) welcome.remove();
 
       history.forEach(msg => {
-        const el = createMessageElement(msg.role, msg.content, msg.time);
+        const el = createMessageElement(msg.role, msg.content, msg.time, msg.thinking, msg.thinkingDuration);
         messagesContainer.appendChild(el);
       });
 
@@ -1338,6 +1544,14 @@
       clearBtn.addEventListener('click', () => {
         if (confirm('确定要清空对话历史吗？')) {
           clearHistory();
+        }
+      });
+
+      // Thinking section toggle (event delegation)
+      messagesContainer.addEventListener('click', (e) => {
+        const header = e.target.closest('.csg-thinking-header');
+        if (header) {
+          header.parentElement.classList.toggle('is-expanded');
         }
       });
 
