@@ -1202,6 +1202,10 @@
 
       let fixed = text;
 
+      // Fix bold markers with extra spaces: "** text**" or "**text **" -> "**text**"
+      fixed = fixed.replace(/\*\*\s+/g, '**');  // Remove spaces after opening **
+      fixed = fixed.replace(/\s+\*\*/g, '**');  // Remove spaces before closing **
+
       // Remove all orphan ** (not part of valid bold pair)
       // First, temporarily replace valid **text** pairs
       const validBolds = [];
