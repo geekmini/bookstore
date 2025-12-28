@@ -1243,7 +1243,55 @@
         return match;
       });
 
+      // Fix incomplete table headers - ensure column count matches separator
+      fixed = fixIncompleteTableHeaders(fixed);
+
       return fixed;
+    }
+
+    // Fix tables where header has fewer columns than separator/data rows
+    function fixIncompleteTableHeaders(text) {
+      const lines = text.split('\n');
+      const result = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const nextLine = lines[i + 1] || '';
+
+        // Check if this line looks like a table header and next line is separator
+        if (line.includes('|') && /^\|[-|]+\|?$/.test(nextLine.trim())) {
+          // Count columns in separator line
+          const sepCols = (nextLine.match(/\|/g) || []).length - 1;
+
+          // Count columns in header line
+          let headerLine = line.trim();
+          if (!headerLine.endsWith('|')) {
+            headerLine += ' |';
+          }
+          if (!headerLine.startsWith('|')) {
+            headerLine = '| ' + headerLine;
+          }
+          const headerCols = (headerLine.match(/\|/g) || []).length - 1;
+
+          // If header has fewer columns, pad it
+          if (headerCols < sepCols && headerCols > 0) {
+            const padding = ' |'.repeat(sepCols - headerCols);
+            headerLine = headerLine.slice(0, -1) + padding + '|';
+          }
+
+          result.push(headerLine);
+        } else {
+          // Ensure table rows have closing |
+          if (line.includes('|') && !line.trim().endsWith('|') &&
+              (result.length > 0 && result[result.length - 1].includes('|'))) {
+            result.push(line + ' |');
+          } else {
+            result.push(line);
+          }
+        }
+      }
+
+      return result.join('\n');
     }
 
     function renderMarkdown(text) {
