@@ -770,6 +770,25 @@
       to { transform: rotate(360deg); }
     }
 
+    /* Generating Answer Loading */
+    .csg-generating {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px;
+      color: var(--chat-text-secondary);
+      font-size: 14px;
+    }
+
+    .csg-generating-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--chat-primary);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: csg-thinking-spin 0.8s linear infinite;
+    }
+
     .csg-thinking-toggle {
       font-size: 12px;
       color: var(--chat-text-secondary);
@@ -1450,19 +1469,22 @@
         }
       }
 
-      // Handle answer content area - show plain text during streaming
+      // Handle answer content area - show loading during streaming
+      let generatingEl = bubble.querySelector('.csg-generating');
+
       if (parsed.displayContent) {
-        if (!contentArea) {
-          contentArea = document.createElement('div');
-          contentArea.className = 'csg-answer-content';
-          contentArea.style.whiteSpace = 'pre-wrap';  // Preserve line breaks in plain text
-          bubble.appendChild(contentArea);
+        // Show "generating" loading indicator (hide actual content during streaming)
+        if (!generatingEl) {
+          generatingEl = document.createElement('div');
+          generatingEl.className = 'csg-generating';
+          generatingEl.innerHTML = `
+            <div class="csg-generating-spinner"></div>
+            <span>正在生成回答...</span>
+          `;
+          bubble.appendChild(generatingEl);
         }
-        // During streaming: show plain text (Markdown will be rendered on finalize)
-        contentArea.textContent = parsed.displayContent;
-      } else if (contentArea) {
-        // Clear content area if no display content
-        contentArea.textContent = '';
+        // Content is being generated but not shown to user yet
+        // It will be rendered on finalize
       }
     }
 
@@ -1533,10 +1555,21 @@
           }
         }
 
-        // Final Markdown rendering - convert plain text to formatted HTML
-        const contentArea = currentStreamMessage.querySelector('.csg-answer-content');
-        if (contentArea && parsed.displayContent) {
-          contentArea.style.whiteSpace = '';  // Remove pre-wrap for proper Markdown rendering
+        // Remove generating loading indicator
+        const generatingEl = currentStreamMessage.querySelector('.csg-generating');
+        if (generatingEl) {
+          generatingEl.remove();
+        }
+
+        // Final Markdown rendering - create content area and render
+        const bubble = currentStreamMessage.querySelector('.csg-message-bubble');
+        if (bubble && parsed.displayContent) {
+          let contentArea = bubble.querySelector('.csg-answer-content');
+          if (!contentArea) {
+            contentArea = document.createElement('div');
+            contentArea.className = 'csg-answer-content';
+            bubble.appendChild(contentArea);
+          }
           contentArea.innerHTML = renderMarkdown(parsed.displayContent);
         }
 
